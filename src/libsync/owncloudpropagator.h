@@ -374,6 +374,10 @@ public:
 private slots:
     void slotSubJobsFinished(SyncFileItem::Status status) override;
     void slotDirDeletionJobsFinished(SyncFileItem::Status status);
+
+private:
+
+    bool scheduleDelayedJobs();
 };
 
 /**
@@ -578,6 +582,13 @@ public:
     static Result<Vfs::ConvertToPlaceholderResult, QString> staticUpdateMetadata(const SyncFileItem &item, const QString localDir,
                                                                                  Vfs *vfs, SyncJournalDb * const journal);
 
+    Q_REQUIRED_RESULT bool ignoreFilesUpload(const SyncFileItemPtr &item) const;
+
+    Q_REQUIRED_RESULT std::vector<std::unique_ptr<PropagateItemJob>>& delayedJobs()
+    {
+        return _delayedJobs;
+    }
+
 private slots:
 
     void abortTimeout()
@@ -624,6 +635,8 @@ private:
 
     const QString _localDir; // absolute path to the local directory. ends with '/'
     const QString _remoteFolder; // remote folder, ends with '/'
+
+    std::vector<std::unique_ptr<PropagateItemJob>> _delayedJobs;
 };
 
 

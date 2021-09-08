@@ -47,6 +47,7 @@ namespace OCC {
 
 Q_LOGGING_CATEGORY(lcPropagator, "nextcloud.sync.propagator", QtInfoMsg)
 Q_LOGGING_CATEGORY(lcDirectory, "nextcloud.sync.propagator.directory", QtInfoMsg)
+Q_LOGGING_CATEGORY(lcRootDirectory, "nextcloud.sync.propagator.root.directory", QtInfoMsg)
 Q_LOGGING_CATEGORY(lcCleanupPolls, "nextcloud.sync.propagator.cleanuppolls", QtInfoMsg)
 
 qint64 criticalFreeSpaceLimit()
@@ -357,15 +358,18 @@ PropagateItemJob *OwncloudPropagator::createJob(const SyncFileItemPtr &item)
             job->setDeleteExistingFolder(deleteExisting);
             return job;
         } else {
-            PropagateUploadFileCommon *job = nullptr;
+            std::unique_ptr<PropagateUploadFileCommon> job;
             if (item->_size > syncOptions()._initialChunkSize && account()->capabilities().chunkingNg()) {
                 // Item is above _initialChunkSize, thus will be classified as to be chunked
-                job = new PropagateUploadFileNG(this, item);
+                job.reset(new PropagateUploadFileNG{this, item});
             } else {
-                job = new PropagateUploadFileV1(this, item);
+                job.reset(new PropagateUploadFileV1{this, item});
             }
             job->setDeleteExisting(deleteExisting);
-            return job;
+            if (ignoreFilesUpload(item)) {
+                _delayedJobs.push_back(std::move(job));
+            }
+            return job.release();
         }
     case CSYNC_INSTRUCTION_RENAME:
         if (item->_direction == SyncFileItem::Up) {
@@ -417,6 +421,7 @@ void OwncloudPropagator::start(SyncFileItemVector &&items)
             items.end());
     }
 
+    _delayedJobs.clear();
     _rootJob.reset(new PropagateRootDirectory(this));
     QStack<QPair<QString /* directory name */, PropagateDirectory * /* job */>> directories;
     directories.push(qMakePair(QString(), _rootJob.data()));
@@ -511,7 +516,10 @@ void OwncloudPropagator::start(SyncFileItemVector &&items)
         } else {
             if (item->_instruction == CSYNC_INSTRUCTION_TYPE_CHANGE) {
                 // will delete directories, so defer execution
-                directoriesToRemove.prepend(createJob(item));
+                auto *job = createJob(item);
+                if (job) {
+                    directoriesToRemove.prepend(job);
+                }
                 removedDirectory = item->_file + "/";
             } else {
                 directories.top().second->appendTask(item);
@@ -798,6 +806,11 @@ Result<Vfs::ConvertToPlaceholderResult, QString> OwncloudPropagator::staticUpdat
         return dBresult.error();
     }
     return Vfs::ConvertToPlaceholderResult::Ok;
+}
+
+bool OwncloudPropagator::ignoreFilesUpload(const SyncFileItemPtr &item) const
+{
+    return !item->_isEncrypted;
 }
 
 // ================================================================================
@@ -1104,11 +1117,13 @@ qint64 PropagateRootDirectory::committedDiskSpace() const
 
 bool PropagateRootDirectory::scheduleSelfOrChild()
 {
+    qCInfo(lcRootDirectory()) << "scheduleSelfOrChild" << _state << "pending uploads" << propagator()->delayedJobs().size() << "subjobs state" << _subJobs._state;
+
     if (_state == Finished) {
         return false;
     }
 
-    if (PropagateDirectory::scheduleSelfOrChild()) {
+    if (PropagateDirectory::scheduleSelfOrChild() && propagator()->delayedJobs().empty()) {
         return true;
     }
 
@@ -1117,11 +1132,22 @@ bool PropagateRootDirectory::scheduleSelfOrChild()
         return false;
     }
 
+    if (!propagator()->delayedJobs().empty()) {
+        return scheduleDelayedJobs();
+    }
+
     return _dirDeletionJobs.scheduleSelfOrChild();
 }
 
 void PropagateRootDirectory::slotSubJobsFinished(SyncFileItem::Status status)
 {
+    qCInfo(lcRootDirectory()) << status << "slotSubJobsFinished" << _state << "pending uploads" << propagator()->delayedJobs().size() << "subjobs state" << _subJobs._state;
+
+    if (!propagator()->delayedJobs().empty()) {
+        scheduleDelayedJobs();
+        return;
+    }
+
     if (status != SyncFileItem::Success
         && status != SyncFileItem::Restoration
         && status != SyncFileItem::Conflict) {
@@ -1141,6 +1167,16 @@ void PropagateRootDirectory::slotDirDeletionJobsFinished(SyncFileItem::Status st
 {
     _state = Finished;
     emit finished(status);
+}
+
+bool PropagateRootDirectory::scheduleDelayedJobs()
+{
+    for(auto &oneJob : propagator()->delayedJobs()) {
+        _subJobs.appendJob(oneJob.release());
+    }
+    propagator()->delayedJobs().clear();
+    _subJobs._state = Running;
+    return _subJobs.scheduleSelfOrChild();
 }
 
 // ================================================================================
