@@ -556,9 +556,12 @@ Window {
         Rectangle {
             id: trayWindowUnifiedSearchContainer
 
-            anchors.left: trayWindowBackground.left
-            anchors.right: trayWindowBackground.right
-            anchors.top: trayWindowHeaderBackground.bottom
+            anchors {
+                top: trayWindowHeaderBackground.bottom
+                left: trayWindowBackground.left
+                right: trayWindowBackground.right
+            }
+
             height: Style.trayWindowHeaderHeight
             color: "transparent"
 
@@ -570,48 +573,88 @@ Window {
 
                 TextField {
                     id: trayWindowUnifiedSearchTextField
-                    anchors.fill:   parent
+
+                    readonly property color textFieldIconsColor: Style.menuBorder
+
+                    readonly property int textFieldIconsOffset: 10
+
+                    readonly property double textFieldIconsScaleFactor: 0.6
+
+                    readonly property int textFieldHorizontalPaddingOffset: 10
+
+                    anchors.fill: parent
                     anchors.margins: 10
-                    placeholderText: qsTr("Enter name")
+
+                    leftPadding: trayWindowUnifiedSearchTextFieldSearchIcon.width + trayWindowUnifiedSearchTextFieldSearchIcon.anchors.leftMargin + textFieldHorizontalPaddingOffset
+                    rightPadding: trayWindowUnifiedSearchTextFieldClearText.width + trayWindowUnifiedSearchTextFieldClearText.anchors.rightMargin + textFieldHorizontalPaddingOffset
+
+                    placeholderText: qsTr("Search files, messages, events...")
+
+                    selectByMouse: true
 
                     background: Rectangle {
                         radius: 5
-                        implicitWidth: 100
-                        implicitHeight: 24
-                        border.color: parent.activeFocus ? Style.ncBlue : "grey"
+                        border.color: parent.activeFocus ? Style.ncBlue : Style.menuBorder
                         border.width: 1
                     }
 
                     Image {
-                             anchors { top: parent.top; left: parent.left; margins: 4 }
-                             id: trayWindowUnifiedSearchTextFieldSearchIcon
-                             fillMode: Image.PreserveAspectFit
-                             smooth: true;
-                             source: "qrc:///client/theme/magnifying-glass.svg"
-                             height: parent.height / 2
-                             width: parent.height / 2
-                         }
+                        id: trayWindowUnifiedSearchTextFieldSearchIcon
+
+                        anchors {
+                            left: parent.left
+                            leftMargin: parent.textFieldIconsOffset
+                            verticalCenter: parent.verticalCenter
+                        }
+
+                        smooth: true;
+                        antialiasing: true
+                        mipmap: true
+
+                        source: "qrc:///client/theme/magnifying-glass.svg"
+                        sourceSize: Qt.size(parent.height * parent.textFieldIconsScaleFactor, parent.height * parent.textFieldIconsScaleFactor)
+
+                        ColorOverlay {
+                            anchors.fill: parent
+                            source: parent
+                            color: parent.parent.textFieldIconsColor
+                        }
+                    }
 
                     Image {
-                             anchors { top: parent.top; right: parent.right; margins: 4 }
-                             id: trayWindowUnifiedSearchTextFieldClearText
-                             fillMode: Image.PreserveAspectFit
-                             smooth: true; visible: parent.text
-                             source: "qrc:///client/theme/close.svg"
-                             height: parent.height / 2
-                             width: parent.height / 2
+                        id: trayWindowUnifiedSearchTextFieldClearTextButton
 
-                             MouseArea {
-                                 id: clear
-                                 anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
-                                 height: trayWindowUnifiedSearchTextField.height; width: trayWindowUnifiedSearchTextField.height
-                                 onClicked: {
-                                     trayWindowUnifiedSearchTextField.text = ""
-                                     trayWindowUnifiedSearchTextField.forceActiveFocus()
-                                 }
-                             }
-                         }
+                        anchors {
+                            right: parent.right
+                            rightMargin: parent.textFieldIconsOffset
+                            verticalCenter: parent.verticalCenter
+                        }
 
+                        smooth: true;
+                        antialiasing: true
+                        mipmap: true
+
+                        visible: parent.text
+
+                        source: "qrc:///client/theme/close.svg"
+                        sourceSize: Qt.size(parent.height * parent.textFieldIconsScaleFactor, parent.height * parent.textFieldIconsScaleFactor)
+
+                        ColorOverlay {
+                            anchors.fill: parent
+                            source: parent
+                            color: parent.parent.textFieldIconsColor
+                        }
+
+                        MouseArea {
+                            id: trayWindowUnifiedSearchTextFieldClearTextButtonMouseArea
+
+                            anchors.fill: parent
+
+                            onClicked: {
+                                trayWindowUnifiedSearchTextField.text = ""
+                            }
+                        }
+                    }
                 }
             }
         }
