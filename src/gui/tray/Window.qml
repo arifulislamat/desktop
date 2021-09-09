@@ -407,7 +407,7 @@ Window {
                                     visible: UserModel.currentUser.statusMessage !== ""
                                     width: Style.currentAccountLabelWidth
                                     text: UserModel.currentUser.statusMessage !== ""
-                                          ? UserModel.currentUser.statusMessage 
+                                          ? UserModel.currentUser.statusMessage
                                           : UserModel.currentUser.server
                                     elide: Text.ElideRight
                                     color: Style.ncTextColor
@@ -439,20 +439,20 @@ Window {
                 Item {
                     Layout.fillWidth: true
                 }
-                
+
                 RowLayout {
                     id: openLocalFolderRowLayout
                     spacing: 0
                     Layout.preferredWidth:  Style.trayWindowHeaderHeight
                     Layout.preferredHeight: Style.trayWindowHeaderHeight
                     Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
-                    
+
                     HeaderButton {
                         id: openLocalFolderButton
                         visible: UserModel.currentUser.hasLocalFolder
                         icon.source: "qrc:///client/theme/white/folder.svg"
                         onClicked: UserModel.openCurrentAccountLocalFolder()
-                        
+
                         Rectangle {
                             id: folderStateIndicatorBackground
                             width: Style.folderStateIndicatorSize
@@ -463,7 +463,7 @@ Window {
                             radius: width*0.5
                             z: 1
                         }
-    
+
                         Image {
                             id: folderStateIndicator
                             visible: UserModel.currentUser.hasLocalFolder
@@ -471,19 +471,19 @@ Window {
                                     ? Style.stateOnlineImageSource
                                     : Style.stateOfflineImageSource
                             cache: false
-                            
+
                             anchors.top: openLocalFolderButton.verticalCenter
-                            anchors.left: openLocalFolderButton.horizontalCenter  
+                            anchors.left: openLocalFolderButton.horizontalCenter
                             sourceSize.width: Style.folderStateIndicatorSize
                             sourceSize.height: Style.folderStateIndicatorSize
-        
+
                             Accessible.role: Accessible.Indicator
                             Accessible.name: UserModel.currentUser.isConnected ? qsTr("Connected") : qsTr("Disconnected")
                             z: 2
                         }
                     }
-                    
- 
+
+
 
                     Accessible.role: Accessible.Button
                     Accessible.name: qsTr("Open local folder of current account")
@@ -491,11 +491,11 @@ Window {
 
                 HeaderButton {
                     id: trayWindowTalkButton
-                    
+
                     visible: UserModel.currentUser.serverHasTalk
                     icon.source: "qrc:///client/theme/white/talk-app.svg"
                     onClicked: UserModel.openCurrentAccountTalk()
-                    
+
                     Accessible.role: Accessible.Button
                     Accessible.name: qsTr("Open Nextcloud Talk in browser")
                     Accessible.onPressAction: trayWindowTalkButton.clicked()
@@ -504,7 +504,7 @@ Window {
                 HeaderButton {
                     id: trayWindowAppsButton
                     icon.source: "qrc:///client/theme/white/more-apps.svg"
-  
+
                     onClicked: {
                         if(appsMenu.count <= 0) {
                             UserModel.openCurrentAccountServer()
@@ -553,9 +553,72 @@ Window {
             }
         }   // Rectangle trayWindowHeaderBackground
 
+        Rectangle {
+            id: trayWindowUnifiedSearchContainer
+
+            anchors.left: trayWindowBackground.left
+            anchors.right: trayWindowBackground.right
+            anchors.top: trayWindowHeaderBackground.bottom
+            height: Style.trayWindowHeaderHeight
+            color: "transparent"
+
+            RowLayout {
+                id: trayWindowUnifiedSearchContainerLayout
+
+                spacing: 0
+                anchors.fill: parent
+
+                TextField {
+                    id: trayWindowUnifiedSearchTextField
+                    anchors.fill:   parent
+                    anchors.margins: 10
+                    placeholderText: qsTr("Enter name")
+
+                    background: Rectangle {
+                        radius: 5
+                        implicitWidth: 100
+                        implicitHeight: 24
+                        border.color: parent.activeFocus ? Style.ncBlue : "grey"
+                        border.width: 1
+                    }
+
+                    Image {
+                             anchors { top: parent.top; left: parent.left; margins: 4 }
+                             id: trayWindowUnifiedSearchTextFieldSearchIcon
+                             fillMode: Image.PreserveAspectFit
+                             smooth: true;
+                             source: "qrc:///client/theme/magnifying-glass.svg"
+                             height: parent.height / 2
+                             width: parent.height / 2
+                         }
+
+                    Image {
+                             anchors { top: parent.top; right: parent.right; margins: 4 }
+                             id: trayWindowUnifiedSearchTextFieldClearText
+                             fillMode: Image.PreserveAspectFit
+                             smooth: true; visible: parent.text
+                             source: "qrc:///client/theme/close.svg"
+                             height: parent.height / 2
+                             width: parent.height / 2
+
+                             MouseArea {
+                                 id: clear
+                                 anchors { horizontalCenter: parent.horizontalCenter; verticalCenter: parent.verticalCenter }
+                                 height: trayWindowUnifiedSearchTextField.height; width: trayWindowUnifiedSearchTextField.height
+                                 onClicked: {
+                                     trayWindowUnifiedSearchTextField.text = ""
+                                     trayWindowUnifiedSearchTextField.forceActiveFocus()
+                                 }
+                             }
+                         }
+
+                }
+            }
+        }
+
         ListView {
             id: activityListView
-            anchors.top: trayWindowHeaderBackground.bottom
+            anchors.top: trayWindowUnifiedSearchContainer.bottom
             anchors.left: trayWindowBackground.left
             anchors.right: trayWindowBackground.right
             anchors.bottom: trayWindowBackground.bottom
@@ -573,7 +636,7 @@ Window {
 
             model: activityModel
 
-            delegate: ActivityItem {  
+            delegate: ActivityItem {
                 width: activityListView.width
                 height: Style.trayWindowHeaderHeight
                 onClicked: activityModel.triggerDefaultAction(model.index)
