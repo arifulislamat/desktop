@@ -162,6 +162,8 @@ public:
 
     Q_INVOKABLE std::shared_ptr<OCC::UserStatusConnector> userStatusConnector(int id);
 
+    Q_INVOKABLE void triggerUnifiedSearch(const QString &searchTerm);
+
     ActivityListModel *currentActivityModel();
 
     enum UserRoles {

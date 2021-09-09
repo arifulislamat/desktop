@@ -655,6 +655,8 @@ Window {
                             }
                         }
                     }
+
+                    onTextEdited: UserModel.triggerUnifiedSearch(text);
                 }
             }
         }

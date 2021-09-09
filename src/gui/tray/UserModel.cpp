@@ -933,6 +933,12 @@ std::shared_ptr<OCC::UserStatusConnector> UserModel::userStatusConnector(int id)
     return _users[id]->account()->userStatusConnector();
 }
 
+void UserModel::triggerUnifiedSearch(const QString &searchTerm)
+{
+    int a = 5;
+    a = 6;
+}
+
 int UserModel::rowCount(const QModelIndex &parent) const
 {
     Q_UNUSED(parent);
