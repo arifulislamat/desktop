@@ -656,7 +656,7 @@ Window {
                         }
                     }
 
-                    onTextEdited: UserModel.triggerUnifiedSearch(text);
+                    onTextEdited: UserModel.onUnifiedSearchTextEdited(text);
                 }
             }
         }

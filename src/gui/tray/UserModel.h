@@ -9,6 +9,7 @@
 #include <QHash>
 
 #include "ActivityListModel.h"
+#include "UnifiedSearchResultsListModel.h"
 #include "accountmanager.h"
 #include "folderman.h"
 #include "NotificationCache.h"
@@ -111,6 +112,7 @@ private:
     AccountStatePtr _account;
     bool _isCurrentUser;
     ActivityListModel *_activityModel;
+    UnifiedSearchResultsListModel *_unifiedSearchResultsModel;
     ActivityList _blacklistedNotifications;
 
     QTimer _expiredActivitiesCheckTimer;
@@ -118,6 +120,9 @@ private:
     QHash<AccountState *, QElapsedTimer> _timeSinceLastCheck;
 
     QElapsedTimer _guiLogTimer;
+
+    QElapsedTimer _unifiedSearchLastTextEditTimeout;
+
     NotificationCache _notificationCache;
 
     // number of currently running notification requests. If non zero,
@@ -162,7 +167,7 @@ public:
 
     Q_INVOKABLE std::shared_ptr<OCC::UserStatusConnector> userStatusConnector(int id);
 
-    Q_INVOKABLE void triggerUnifiedSearch(const QString &searchTerm);
+    Q_INVOKABLE void onUnifiedSearchTextEdited(const QString &searchTerm);
 
     ActivityListModel *currentActivityModel();
 

@@ -111,6 +111,7 @@ set(client_SRCS
     emojimodel.cpp
     tray/ActivityData.cpp
     tray/ActivityListModel.cpp
+    tray/UnifiedSearchResultsListModel.cpp
     tray/UserModel.cpp
     tray/NotificationHandler.cpp
     tray/NotificationCache.cpp

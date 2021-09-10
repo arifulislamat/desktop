@@ -262,6 +262,8 @@ public:
 
     std::shared_ptr<UserStatusConnector> userStatusConnector() const;
 
+    void slotUnifiedSearchTextEdited(const QString &searchTerm);
+
 public slots:
     /// Used when forgetting credentials
     void clearQNAMCache();

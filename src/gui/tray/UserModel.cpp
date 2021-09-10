@@ -39,6 +39,7 @@ User::User(AccountStatePtr &account, const bool &isCurrent, QObject *parent)
     , _account(account)
     , _isCurrentUser(isCurrent)
     , _activityModel(new ActivityListModel(_account.data()))
+    , _unifiedSearchResultsModel(new UnifiedSearchResultsListModel(_account.data()))
     , _notificationRequestsRunning(0)
 {
     connect(ProgressDispatcher::instance(), &ProgressDispatcher::progressInfo,
@@ -933,10 +934,9 @@ std::shared_ptr<OCC::UserStatusConnector> UserModel::userStatusConnector(int id)
     return _users[id]->account()->userStatusConnector();
 }
 
-void UserModel::triggerUnifiedSearch(const QString &searchTerm)
+void UserModel::onUnifiedSearchTextEdited(const QString &searchTerm)
 {
-    int a = 5;
-    a = 6;
+    _users[0]->account()->slotUnifiedSearchTextEdited(searchTerm);
 }
 
 int UserModel::rowCount(const QModelIndex &parent) const

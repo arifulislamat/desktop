@@ -781,4 +781,9 @@ std::shared_ptr<UserStatusConnector> Account::userStatusConnector() const
     return _userStatusConnector;
 }
 
+void Account::slotUnifiedSearchTextEdited(const QString &searchTerm)
+{
+    _unifiedSearchLastTextEditTimeout.start();
+}
+
 } // namespace OCC
